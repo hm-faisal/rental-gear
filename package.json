@@ -1,0 +1,54 @@
+{
+	"name": "prisma-press",
+	"version": "1.0.0",
+	"description": "",
+	"main": "src/index.ts",
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"build": "tsc && tsc-alias",
+		"start": "node dist/src/index.js",
+		"prisma:generate": "prisma generate",
+		"prisma:migrate": "prisma migrate dev",
+		"biome:format": "pnpx @biomejs/biome format --write",
+		"biome:lint": "pnpx @biomejs/biome lint --write",
+		"biome": "pnpx @biomejs/biome check --write"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devEngines": {
+		"packageManager": {
+			"name": "pnpm",
+			"version": "^11.3.0",
+			"onFail": "download"
+		}
+	},
+	"type": "module",
+	"devDependencies": {
+		"@biomejs/biome": "2.5.0",
+		"@types/cookie-parser": "^1.4.10",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.6",
+		"@types/jsonwebtoken": "^9.0.10",
+		"@types/node": "^26.0.0",
+		"@types/pg": "^8.20.0",
+		"@types/swagger-ui-express": "^4.1.8",
+		"prisma": "^7.8.0",
+		"tsc-alias": "^1.9.0",
+		"tsx": "^4.22.4",
+		"typescript": "^6.0.3"
+	},
+	"dependencies": {
+		"@prisma/adapter-pg": "^7.8.0",
+		"@prisma/client": "^7.8.0",
+		"bcryptjs": "^3.0.3",
+		"cookie-parser": "^1.4.7",
+		"cors": "^2.8.6",
+		"dotenv": "^17.4.2",
+		"express": "^5.2.1",
+		"jsonwebtoken": "^9.0.3",
+		"pg": "^8.22.0",
+		"swagger-ui-express": "^5.0.1",
+		"yaml": "^2.9.0"
+	}
+}

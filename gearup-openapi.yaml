@@ -1,0 +1,874 @@
+openapi: 3.0.3
+info:
+  title: GearUp API
+  description: >
+    Backend REST API for GearUp — a sports and outdoor equipment rental
+    platform. Customers browse gear, place rental orders, and pay via
+    Stripe. Providers manage gear inventory and fulfil orders. Admins
+    oversee users, gear, categories, and rentals.
+  version: "1.0.0"
+  contact:
+    name: GearUp API Support
+servers:
+  - url: http://localhost:3000/api
+    description: development
+  - url: https://staging-api.gearup.example.com/api
+    description: Staging
+
+tags:
+  - name: Auth
+  - name: Gear
+  - name: Categories
+  - name: Rentals
+  - name: Payments
+  - name: Provider
+  - name: Reviews
+  - name: Admin
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ---------------- AUTH ----------------
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new Customer or Provider
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, role]
+              properties:
+                name: { type: string, example: "Ayesha Rahman" }
+                email: { type: string, format: email }
+                password: { type: string, format: password, minLength: 8 }
+                role: { type: string, enum: [CUSTOMER, PROVIDER] }
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate a user and receive a JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403":
+          description: Account suspended
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the current authenticated user's profile
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ---------------- GEAR (PUBLIC) ----------------
+  /gear:
+    get:
+      tags: [Gear]
+      summary: List available gear with filters
+      security: []
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string }
+          description: Category id or slug
+        - name: brand
+          in: query
+          schema: { type: string }
+        - name: minPrice
+          in: query
+          schema: { type: number }
+        - name: maxPrice
+          in: query
+          schema: { type: number }
+        - name: available
+          in: query
+          schema: { type: boolean }
+        - name: search
+          in: query
+          schema: { type: string }
+          description: Free-text search on name/description
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Paginated list of gear items
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/GearItem" }
+
+  /gear/{id}:
+    get:
+      tags: [Gear]
+      summary: Get details of a single gear item
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Gear item details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GearItem" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List all gear categories
+      security: []
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Category" }
+
+  # ---------------- RENTAL ORDERS ----------------
+  /rentals:
+    post:
+      tags: [Rentals]
+      summary: Create a new rental order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items, startDate, endDate]
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [gearItemId, quantity]
+                    properties:
+                      gearItemId: { type: string }
+                      quantity: { type: integer, minimum: 1 }
+                startDate: { type: string, format: date }
+                endDate: { type: string, format: date }
+      responses:
+        "201":
+          description: Rental order created with status PLACED
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RentalOrder" }
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          description: One or more gear items unavailable for the requested dates
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    get:
+      tags: [Rentals]
+      summary: Get the authenticated customer's rental orders
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/RentalStatus" }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Paginated list of rental orders
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/RentalOrder" }
+
+  /rentals/{id}:
+    get:
+      tags: [Rentals]
+      summary: Get details of a single rental order
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Rental order details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RentalOrder" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /rentals/{id}/cancel:
+    patch:
+      tags: [Rentals]
+      summary: Cancel a rental order (only while status is PLACED)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Rental order cancelled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RentalOrder" }
+        "409":
+          description: Order cannot be cancelled in its current status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # ---------------- PAYMENTS (STRIPE) ----------------
+  /payments/create:
+    post:
+      tags: [Payments]
+      summary: Create a Stripe PaymentIntent/Checkout Session for a rental order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rentalOrderId]
+              properties:
+                rentalOrderId: { type: string }
+      responses:
+        "201":
+          description: Stripe payment session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment: { $ref: "#/components/schemas/Payment" }
+                  clientSecret:
+                    type: string
+                    description: Stripe PaymentIntent client secret for use with Stripe.js/Elements
+                  checkoutUrl:
+                    type: string
+                    description: Stripe-hosted Checkout URL, if using Checkout Sessions
+        "409":
+          description: Order is not in a payable (CONFIRMED) status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /payments/confirm:
+    post:
+      tags: [Payments]
+      summary: Confirm/verify a payment's status (redirect-back fallback to the webhook)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [transactionId]
+              properties:
+                transactionId:
+                  type: string
+                  description: Stripe PaymentIntent or Checkout Session ID
+      responses:
+        "200":
+          description: Current payment status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Payment" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /payments/webhook:
+    post:
+      tags: [Payments]
+      summary: Stripe webhook endpoint (server-to-server; verified via Stripe signature)
+      security: []
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Raw Stripe event payload (payment_intent.succeeded, payment_intent.payment_failed, etc.)
+      responses:
+        "200":
+          description: Event processed
+        "400":
+          description: Invalid or unverified Stripe signature
+
+  /payments:
+    get:
+      tags: [Payments]
+      summary: Get the authenticated customer's payment history
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Paginated payment history
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/Payment" }
+
+  /payments/{id}:
+    get:
+      tags: [Payments]
+      summary: Get details of a single payment
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Payment details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Payment" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ---------------- PROVIDER MANAGEMENT ----------------
+  /provider/gear:
+    post:
+      tags: [Provider]
+      summary: Add a new gear item to the provider's inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GearItemInput" }
+      responses:
+        "201":
+          description: Gear item created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GearItem" }
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /provider/gear/{id}:
+    put:
+      tags: [Provider]
+      summary: Update a gear listing owned by the provider
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GearItemInput" }
+      responses:
+        "200":
+          description: Gear item updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GearItem" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Provider]
+      summary: Remove a gear listing owned by the provider
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Gear item deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /provider/orders:
+    get:
+      tags: [Provider]
+      summary: Get incoming rental orders that involve the provider's gear
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/RentalStatus" }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Paginated list of orders
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/RentalOrder" }
+
+  /provider/orders/{id}:
+    patch:
+      tags: [Provider]
+      summary: Update rental order status (confirm, mark picked up, mark returned)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [CONFIRMED, PICKED_UP, RETURNED]
+      responses:
+        "200":
+          description: Rental order status updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RentalOrder" }
+        "409":
+          description: Requested status transition is not allowed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # ---------------- REVIEWS ----------------
+  /reviews:
+    post:
+      tags: [Reviews]
+      summary: Create a review for a gear item after the rental order has been returned
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rentalOrderId, gearItemId, rating]
+              properties:
+                rentalOrderId: { type: string }
+                gearItemId: { type: string }
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: string }
+      responses:
+        "201":
+          description: Review created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Review" }
+        "409":
+          description: Order not yet RETURNED, or a review already exists for this order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # ---------------- ADMIN ----------------
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Get all users
+      parameters:
+        - name: role
+          in: query
+          schema: { type: string, enum: [customer, provider, admin] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, suspended] }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/User" }
+
+  /admin/users/{id}:
+    patch:
+      tags: [Admin]
+      summary: Update a user's status (suspend/activate)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [active, suspended] }
+      responses:
+        "200":
+          description: User status updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /admin/gear:
+    get:
+      tags: [Admin]
+      summary: Get all gear listings across all providers
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Paginated list of gear items
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/GearItem" }
+
+  /admin/rentals:
+    get:
+      tags: [Admin]
+      summary: Get all rental orders across the platform
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/RentalStatus" }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Paginated list of rental orders
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/RentalOrder" }
+
+  /admin/categories:
+    post:
+      tags: [Admin]
+      summary: Create a gear category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+
+  /admin/categories/{id}:
+    put:
+      tags: [Admin]
+      summary: Update a gear category
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        "200":
+          description: Category updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+    delete:
+      tags: [Admin]
+      summary: Delete a gear category
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Category deleted
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Authenticated but not permitted to access this resource
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationError:
+      description: Request failed validation
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string }
+        errors:
+          type: array
+          items: { type: string }
+
+    PaginatedResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        page: { type: integer, example: 1 }
+        limit: { type: integer, example: 20 }
+        total: { type: integer, example: 57 }
+
+    AuthResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        token: { type: string, description: "JWT access token" }
+        user: { $ref: "#/components/schemas/User" }
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [customer, provider, admin] }
+        phone: { type: string }
+        address: { type: string }
+        status: { type: string, enum: [active, suspended] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Category:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string, example: "Camping" }
+        description: { type: string }
+
+    GearItemInput:
+      type: object
+      required: [name, categoryId, pricePerDay, stockQuantity]
+      properties:
+        name: { type: string }
+        categoryId: { type: string }
+        description: { type: string }
+        brand: { type: string }
+        pricePerDay: { type: number, format: float }
+        stockQuantity: { type: integer }
+        isAvailable: { type: boolean, default: true }
+        images:
+          type: array
+          items: { type: string, format: uri }
+
+    GearItem:
+      allOf:
+        - $ref: "#/components/schemas/GearItemInput"
+        - type: object
+          properties:
+            id: { type: string }
+            providerId: { type: string }
+            averageRating: { type: number, format: float, example: 4.5 }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+
+    RentalStatus:
+      type: string
+      enum: [PLACED, CONFIRMED, PAID, PICKED_UP, RETURNED, CANCELLED]
+
+    RentalOrderItem:
+      type: object
+      properties:
+        gearItemId: { type: string }
+        quantity: { type: integer }
+        pricePerDay: { type: number, format: float }
+
+    RentalOrder:
+      type: object
+      properties:
+        id: { type: string }
+        customerId: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RentalOrderItem" }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        totalAmount: { type: number, format: float }
+        status: { $ref: "#/components/schemas/RentalStatus" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    PaymentStatus:
+      type: string
+      enum: [pending, completed, failed]
+
+    Payment:
+      type: object
+      properties:
+        id: { type: string }
+        transactionId:
+          type: string
+          description: Stripe PaymentIntent or Checkout Session ID
+        rentalOrderId: { type: string }
+        amount: { type: number, format: float }
+        currency: { type: string, example: "usd" }
+        method:
+          type: string
+          enum: [stripe]
+          example: stripe
+        status: { $ref: "#/components/schemas/PaymentStatus" }
+        paidAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Review:
+      type: object
+      properties:
+        id: { type: string }
+        customerId: { type: string }
+        gearItemId: { type: string }
+        rentalOrderId: { type: string }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string }
+        createdAt: { type: string, format: date-time }

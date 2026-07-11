@@ -27,6 +27,7 @@ tags:
 
 security:
   - bearerAuth: []
+  - cookieAuth: []
 
 paths:
   # ---------------- AUTH ----------------
@@ -712,6 +713,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
 
   parameters:
     IdParam:
@@ -789,13 +794,13 @@ components:
 
     GearItemInput:
       type: object
-      required: [name, categoryId, pricePerDay, stockQuantity]
+      required: [name, categoryId, price, stockQuantity]
       properties:
         name: { type: string }
         categoryId: { type: string }
         description: { type: string }
         brand: { type: string }
-        pricePerDay: { type: number, format: float }
+        price: { type: number, format: float }
         stockQuantity: { type: integer }
         isAvailable: { type: boolean, default: true }
         images:
@@ -822,7 +827,7 @@ components:
       properties:
         gearItemId: { type: string }
         quantity: { type: integer }
-        pricePerDay: { type: number, format: float }
+        price: { type: number, format: float }
 
     RentalOrder:
       type: object

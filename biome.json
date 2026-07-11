@@ -11,13 +11,15 @@
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",
-		"formatWithErrors": true
+		"formatWithErrors": true,
+		"includes": ["**", "!**/generated/**/*", "!**/dist/**/*"]
 	},
 	"linter": {
 		"enabled": true,
 		"rules": {
 			"preset": "recommended"
-		}
+		},
+		"includes": ["**", "!**/generated/**/*", "!**/dist/**/*"]
 	},
 	"javascript": {
 		"formatter": {

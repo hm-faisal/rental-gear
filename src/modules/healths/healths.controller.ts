@@ -13,4 +13,3 @@ const getHealth = catchAsync((_req, res) => {
 export const healthController = {
 	getHealth,
 };
-

@@ -1,9 +1,10 @@
+import type { Request, Response } from 'express';
 import catchAsync from '@/utils/catch-async';
 import sendResponse from '@/utils/send-response';
 import { gearService } from './gear.service';
 import { validateGearIdParam, validateGearListQuery } from './gear.validation';
 
-const getGears = catchAsync(async (req, res) => {
+const getGears = catchAsync(async (req: Request, res: Response) => {
 	const filters = validateGearListQuery(req.query);
 	const data = await gearService.getAllGears(filters);
 
@@ -14,7 +15,7 @@ const getGears = catchAsync(async (req, res) => {
 	});
 });
 
-const getGearsById = catchAsync(async (req, res) => {
+const getGearsById = catchAsync(async (req: Request, res: Response) => {
 	const id = validateGearIdParam(req.params.id);
 	const data = await gearService.getGearById(id);
 
@@ -25,7 +26,7 @@ const getGearsById = catchAsync(async (req, res) => {
 	});
 });
 
-const getCategories = catchAsync(async (_req, res) => {
+const getCategories = catchAsync(async (_req: Request, res: Response) => {
 	const data = await gearService.getCategories();
 
 	sendResponse(res, {

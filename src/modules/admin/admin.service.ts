@@ -1,10 +1,10 @@
+import { BadRequestError, NotFoundError } from '@/errors';
 import type {
 	RentalStatus,
 	Role,
 	UserStatus,
 } from '../../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import { BadRequestError, NotFoundError } from '@/errors';
 
 const getAllUsers = async (filters: {
 	role?: Role;
@@ -182,7 +182,7 @@ const updateCategory = async (
 			where: { name: input.name },
 		});
 		if (existing && existing.id !== id) {
-throw new BadRequestError('Category with this name already exists');
+			throw new BadRequestError('Category with this name already exists');
 		}
 	}
 

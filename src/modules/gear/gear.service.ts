@@ -90,33 +90,32 @@ const getAllGears = async (filters: GearListFilters) => {
 	};
 };
 
+const getGearById = async (id: string) => {
+	const gear = await prisma.gearItem.findUnique({
+		where: { id },
+		include: {
+			category: { select: { id: true, name: true } },
+			provider: { select: { id: true, name: true } },
+			reviews: {
+				orderBy: { createdAt: 'desc' },
+				include: { customer: { select: { id: true, name: true } } },
+			},
+		},
+	});
+
+	if (!gear) {
+		throw new NotFoundError('Gear item not found');
+	}
+
+	return withAverageRating(gear as GearWithReviews);
+};
+
+const getCategories = async () => {
+	return prisma.category.findMany();
+};
+
 export const gearService = {
 	getAllGears,
-
-	/**
-	 * Gear details with specifications, provider info, and reviews (FR-2.3).
-	 */
-	async getGearById(id: string) {
-		const gear = await prisma.gearItem.findUnique({
-			where: { id },
-			include: {
-				category: { select: { id: true, name: true } },
-				provider: { select: { id: true, name: true } },
-				reviews: {
-					orderBy: { createdAt: 'desc' },
-					include: { customer: { select: { id: true, name: true } } },
-				},
-			},
-		});
-
-		if (!gear) {
-			throw new NotFoundError('Gear item not found');
-		}
-
-		return withAverageRating(gear as GearWithReviews);
-	},
-
-	async getCategories() {
-		return prisma.category.findMany();
-	},
+	getGearById,
+	getCategories,
 };

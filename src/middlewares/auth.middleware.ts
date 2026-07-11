@@ -3,6 +3,18 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config';
 import { prisma } from '../lib/prisma';
 
+declare global {
+	namespace Express {
+		interface Request {
+			user?: {
+				id: string;
+				email: string;
+				role: string;
+			};
+		}
+	}
+}
+
 export interface AuthRequest extends Request {
 	user?: {
 		id: string;
@@ -13,12 +25,14 @@ export interface AuthRequest extends Request {
 
 export const auth = (roles?: string[]) => {
 	return async (
-		req: AuthRequest,
+		req: Request,
 		res: Response,
 		next: NextFunction,
 	): Promise<void> => {
 		try {
 			let token = req.cookies?.accessToken;
+
+			console.log(token);
 
 			if (!token && req.headers.authorization?.startsWith('Bearer ')) {
 				token = req.headers.authorization.split(' ')[1];

@@ -72,7 +72,7 @@ export function validateRentalCreateInput(
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError(errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	const startStr = String(body.startDate).trim();
@@ -164,7 +164,7 @@ export function validateRentalListQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError(errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return { status, page, limit };

@@ -76,7 +76,7 @@ export function validateUserListQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError('Query parameter error', errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return { role, status, page, limit };
@@ -136,7 +136,7 @@ export function validatePaginationQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError('Pagination query errors', errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return { page, limit };
@@ -186,7 +186,7 @@ export function validateRentalListQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError(errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return { status, page, limit };

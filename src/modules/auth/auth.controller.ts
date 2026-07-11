@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import type { AuthRequest } from '../../middlewares/auth.middleware.js';
 import { BadRequestError, ForbiddenError } from '@/errors';
+import type { AuthRequest } from '../../middlewares/auth.middleware.js';
 import catchAsync from '../../utils/catch-async.js';
 import sendResponse from '../../utils/send-response.js';
 import { authService } from './auth.service.js';
@@ -66,13 +66,6 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 		secure: process.env.NODE_ENV === 'production',
 		sameSite: 'strict',
 		maxAge: 24 * 60 * 60 * 1000, // 1 day
-	});
-
-	res.cookie('refreshToken', result.refreshToken, {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'strict',
-		maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 	});
 
 	sendResponse(res, {

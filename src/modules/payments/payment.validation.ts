@@ -19,7 +19,7 @@ export function validateCreatePaymentBody(
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError(errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return { rentalOrderId: body.rentalOrderId };
@@ -43,7 +43,7 @@ export function validateConfirmPaymentBody(
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError(errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return { transactionId: body.transactionId.trim() };

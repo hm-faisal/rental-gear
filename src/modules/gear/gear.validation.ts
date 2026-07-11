@@ -85,9 +85,7 @@ export function validateGearListQuery(
 	}
 
 	if (errors.length > 0) {
-		errors.forEach((errorMsg) => {
-			throw new BadRequestError(errorMsg);
-		});
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return {

@@ -32,8 +32,6 @@ export const auth = (roles?: string[]) => {
 		try {
 			let token = req.cookies?.accessToken;
 
-			console.log(token);
-
 			if (!token && req.headers.authorization?.startsWith('Bearer ')) {
 				token = req.headers.authorization.split(' ')[1];
 			}

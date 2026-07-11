@@ -1,30 +1,20 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '@/errors';
 
 export const errorHandler = (
 	err: AppError,
 	_req: Request,
 	res: Response,
+	_next: NextFunction,
 ): void => {
-	let statusCode = err.statusCode || 500;
-	let message = err.message || 'Something went wrong';
-	let errorDetails: unknown = err.errorDetails;
+	const statusCode = err instanceof AppError ? err.statusCode : 500;
+	const message = err instanceof AppError ? err.message : 'Internal server error';
+	const errorDetails = err instanceof AppError ? (err.errorDetails ?? null) : null;
 
-	if (!(err instanceof AppError)) {
-		statusCode = 500;
-		message = 'Internal server error';
-		errorDetails = undefined;
-	}
-
-	const responseBody: Record<string, unknown> = {
+	res.status(statusCode).json({
 		success: false,
 		message,
-		stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-	};
-
-	if (errorDetails !== undefined) {
-		responseBody.errorDetails = errorDetails;
-	}
-
-	res.status(statusCode).json(responseBody);
+		errorDetails,
+		...(process.env.NODE_ENV === 'development' ? { stack: err.stack } : {}),
+	});
 };

@@ -45,7 +45,7 @@ export function validateReviewCreateInput(
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError(errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return {

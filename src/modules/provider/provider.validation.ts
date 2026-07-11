@@ -77,7 +77,7 @@ export function validateGearItemInput(
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError(errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return {
@@ -175,7 +175,7 @@ export function validateOrderListQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new BadRequestError(errors.join(', '));
+		throw new BadRequestError('Validation failed', errors);
 	}
 
 	return { status, page, limit };

@@ -2,9 +2,9 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"outDir": "./dist",
-		"module": "esnext",
+		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"target": "esnext",
+		"target": "ES2023",
 		"types": ["node"],
 		"sourceMap": true,
 		"declaration": true,
@@ -15,7 +15,6 @@
 		"noUncheckedSideEffectImports": true,
 		"moduleDetection": "force",
 		"skipLibCheck": true,
-		"forceConsistentCasingInFileNames": true,
 		"paths": {
 			"@/*": ["./src/*"]
 		}

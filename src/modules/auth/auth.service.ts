@@ -1,7 +1,7 @@
+import { BadRequestError, ForbiddenError, NotFoundError } from '@/errors';
 import { Role } from '../../../generated/prisma/client';
 import { env } from '../../config/index.js';
 import { prisma } from '../../lib/prisma.js';
-import { BadRequestError, ForbiddenError, NotFoundError } from '@/errors';
 import { comparePassword, hashPassword } from '../../utils/bcrypt.js';
 import { generateToken } from '../../utils/jwt.js';
 

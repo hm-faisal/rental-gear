@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
 import { NotFoundError } from '@/errors';
+import { prisma } from '@/lib/prisma';
 import type { GearItem, Prisma, Review } from '../../../generated/prisma';
 import type { GearListFilters } from './gear.validation';
 

@@ -8,7 +8,6 @@ import YAML from 'yaml';
 import { env } from './config';
 import { errorHandler } from './middlewares/error.middlewares';
 import { paymentController } from './modules/payments/payment.controller';
-import { paymentRouter } from './modules/payments/payment.routes';
 import applicationRoutes from './routes';
 
 const app: Application = express();

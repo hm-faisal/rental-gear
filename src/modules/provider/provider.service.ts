@@ -1,6 +1,6 @@
 import { RentalStatus } from '../../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import AppError from '../../utils/app-error.js';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '@/errors';
 import type { GearItemInput } from './provider.validation.js';
 
 const addGearItem = async (providerId: string, input: GearItemInput) => {
@@ -9,7 +9,7 @@ const addGearItem = async (providerId: string, input: GearItemInput) => {
 		where: { id: input.categoryId },
 	});
 	if (!category) {
-		throw new AppError(400, 'Category not found');
+		throw new BadRequestError('Category not found');
 	}
 
 	const gear = await prisma.gearItem.create({
@@ -39,11 +39,10 @@ const updateGearItem = async (
 		where: { id },
 	});
 	if (!gear) {
-		throw new AppError(404, 'Gear item not found');
+		throw new NotFoundError('Gear item not found');
 	}
 	if (gear.providerId !== providerId) {
-		throw new AppError(
-			403,
+		throw new ForbiddenError(
 			'You do not have permission to perform this action',
 		);
 	}
@@ -53,7 +52,7 @@ const updateGearItem = async (
 		where: { id: input.categoryId },
 	});
 	if (!category) {
-		throw new AppError(400, 'Category not found');
+		throw new BadRequestError('Category not found');
 	}
 
 	const updatedGear = await prisma.gearItem.update({
@@ -79,11 +78,10 @@ const deleteGearItem = async (providerId: string, id: string) => {
 		where: { id },
 	});
 	if (!gear) {
-		throw new AppError(404, 'Gear item not found');
+		throw new NotFoundError('Gear item not found');
 	}
 	if (gear.providerId !== providerId) {
-		throw new AppError(
-			403,
+		throw new ForbiddenError(
 			'You do not have permission to perform this action',
 		);
 	}
@@ -168,7 +166,7 @@ const updateOrderStatus = async (
 	});
 
 	if (!order) {
-		throw new AppError(404, 'Rental order not found');
+		throw new NotFoundError('Rental order not found');
 	}
 
 	// Verify that at least one gear item in the order belongs to this provider
@@ -176,8 +174,7 @@ const updateOrderStatus = async (
 		(item) => item.gearItem.providerId === providerId,
 	);
 	if (!belongsToProvider) {
-		throw new AppError(
-			403,
+		throw new ForbiddenError(
 			'You do not have permission to perform this action',
 		);
 	}
@@ -185,24 +182,21 @@ const updateOrderStatus = async (
 	// State transitions check
 	if (status === 'CONFIRMED') {
 		if (order.status !== RentalStatus.PLACED) {
-			throw new AppError(
-				409,
-				'Order can only be confirmed when it is in PLACED status',
-			);
+		throw new ConflictError(
+			'Order can only be confirmed when it is in PLACED status',
+		);
 		}
 	} else if (status === 'PICKED_UP') {
 		if (order.status !== RentalStatus.PAID) {
-			throw new AppError(
-				409,
-				'Order can only be marked picked up when it is in PAID status',
-			);
+		throw new ConflictError(
+			'Order can only be marked picked up when it is in PAID status',
+		);
 		}
 	} else if (status === 'RETURNED') {
 		if (order.status !== RentalStatus.PICKED_UP) {
-			throw new AppError(
-				409,
-				'Order can only be marked returned when it is in PICKED_UP status',
-			);
+		throw new ConflictError(
+			'Order can only be marked returned when it is in PICKED_UP status',
+		);
 		}
 	}
 

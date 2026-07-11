@@ -1,6 +1,6 @@
 import { RentalStatus } from '../../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import AppError from '../../utils/app-error.js';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '@/errors';
 import type { ReviewCreateInput } from './review.validation.js';
 
 const createReview = async (customerId: string, payload: ReviewCreateInput) => {
@@ -15,20 +15,19 @@ const createReview = async (customerId: string, payload: ReviewCreateInput) => {
 	});
 
 	if (!order) {
-		throw new AppError(404, 'Rental order not found');
+		throw new NotFoundError('Rental order not found');
 	}
 
 	// 2. Verify authorization
 	if (order.customerId !== customerId) {
-		throw new AppError(
-			403,
+		throw new ForbiddenError(
 			'You do not have permission to perform this action',
 		);
 	}
 
 	// 3. Verify order status is RETURNED
 	if (order.status !== RentalStatus.RETURNED) {
-		throw new AppError(409, 'Order not yet RETURNED');
+		throw new ConflictError('Order not yet RETURNED');
 	}
 
 	// 4. Verify the gear item was part of this order
@@ -36,7 +35,7 @@ const createReview = async (customerId: string, payload: ReviewCreateInput) => {
 		(item) => item.gearItemId === gearItemId,
 	);
 	if (!itemInOrder) {
-		throw new AppError(400, 'This gear item was not part of the rental order');
+		throw new BadRequestError('This gear item was not part of the rental order');
 	}
 
 	// 5. Verify review doesn't already exist for this rental order
@@ -45,7 +44,7 @@ const createReview = async (customerId: string, payload: ReviewCreateInput) => {
 	});
 
 	if (existingReview) {
-		throw new AppError(409, 'A review already exists for this order');
+		throw new ConflictError('A review already exists for this order');
 	}
 
 	// 6. Create the review

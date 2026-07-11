@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import AppError from '@/utils/app-error';
+import { NotFoundError } from '@/errors';
 import type { GearItem, Prisma, Review } from '../../../generated/prisma';
 import type { GearListFilters } from './gear.validation';
 
@@ -110,7 +110,7 @@ export const gearService = {
 		});
 
 		if (!gear) {
-			throw new AppError(404, 'Gear item not found');
+			throw new NotFoundError('Gear item not found');
 		}
 
 		return withAverageRating(gear as GearWithReviews);

@@ -1,5 +1,5 @@
 import { RentalStatus } from '../../../generated/prisma/index.js';
-import AppError from '../../utils/app-error.js';
+import { BadRequestError } from '@/errors';
 
 const UUID_REGEX =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -72,7 +72,7 @@ export function validateRentalCreateInput(
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError(errors.join(', '));
 	}
 
 	const startStr = String(body.startDate).trim();
@@ -82,15 +82,15 @@ export function validateRentalCreateInput(
 	const endDateObj = new Date(endStr);
 
 	if (Number.isNaN(startDateObj.getTime())) {
-		throw new AppError(400, 'Invalid startDate format');
+		throw new BadRequestError('Invalid start date format');
 	}
 	if (Number.isNaN(endDateObj.getTime())) {
-		throw new AppError(400, 'Invalid endDate format');
+		throw new BadRequestError('Invalid end date format');
 	}
 
 	// Calculate difference to verify logical sequence
 	if (endDateObj.getTime() < startDateObj.getTime()) {
-		throw new AppError(400, 'endDate cannot be before startDate');
+		throw new BadRequestError('End date cannot be before start date');
 	}
 
 	// Calculate if dates are in the past
@@ -100,7 +100,7 @@ export function validateRentalCreateInput(
 	startCompare.setHours(0, 0, 0, 0);
 
 	if (startCompare.getTime() < today.getTime()) {
-		throw new AppError(400, 'startDate cannot be in the past');
+		throw new BadRequestError('Start date cannot be in the past');
 	}
 
 	return {
@@ -115,7 +115,7 @@ export function validateRentalCreateInput(
 
 export function validateRentalIdParam(id: unknown): string {
 	if (!id || typeof id !== 'string' || !UUID_REGEX.test(id)) {
-		throw new AppError(400, 'Invalid rental order id');
+		throw new BadRequestError('Invalid rental order ID');
 	}
 	return id;
 }
@@ -164,7 +164,7 @@ export function validateRentalListQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError(errors.join(', '));
 	}
 
 	return { status, page, limit };

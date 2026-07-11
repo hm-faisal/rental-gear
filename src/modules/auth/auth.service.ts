@@ -1,7 +1,7 @@
 import { Role } from '../../../generated/prisma/client';
 import { env } from '../../config/index.js';
 import { prisma } from '../../lib/prisma.js';
-import AppError from '../../utils/app-error.js';
+import { BadRequestError, ForbiddenError, NotFoundError } from '@/errors';
 import { comparePassword, hashPassword } from '../../utils/bcrypt.js';
 import { generateToken } from '../../utils/jwt.js';
 
@@ -34,7 +34,7 @@ const register = async (payload: RegisterPayload) => {
 		where: { email },
 	});
 	if (existingUser) {
-		throw new AppError(400, 'User with this email already exists');
+		throw new BadRequestError('A user with this email already exists');
 	}
 
 	// Hash password
@@ -64,18 +64,18 @@ const login = async (payload: LoginPayload) => {
 		where: { email },
 	});
 	if (!user) {
-		throw new AppError(404, 'User not found');
+		throw new NotFoundError('User not found');
 	}
 
 	// Verify password
 	const isPasswordMatched = await comparePassword(password, user.passwordHash);
 	if (!isPasswordMatched) {
-		throw new AppError(401, 'Invalid password');
+		throw new ForbiddenError('Invalid password');
 	}
 
 	// Check if user is suspended
 	if (user.status === 'SUSPENDED') {
-		throw new AppError(403, 'Your account has been suspended');
+		throw new ForbiddenError('Your account has been suspended');
 	}
 
 	// Generate tokens
@@ -110,7 +110,7 @@ const getProfile = async (id: string) => {
 		omit: { passwordHash: true },
 	});
 	if (!user) {
-		throw new AppError(404, 'User not found');
+		throw new NotFoundError('User not found');
 	}
 	return user;
 };
@@ -123,7 +123,7 @@ const updateProfile = async (
 		where: { id },
 	});
 	if (!user) {
-		throw new AppError(404, 'User not found');
+		throw new NotFoundError('User not found');
 	}
 
 	const updatedUser = await prisma.user.update({

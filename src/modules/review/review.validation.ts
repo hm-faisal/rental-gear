@@ -1,4 +1,4 @@
-import AppError from '../../utils/app-error.js';
+import { BadRequestError } from '@/errors';
 
 const UUID_REGEX =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -45,7 +45,7 @@ export function validateReviewCreateInput(
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError(errors.join(', '));
 	}
 
 	return {

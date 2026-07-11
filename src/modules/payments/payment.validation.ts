@@ -1,4 +1,4 @@
-import AppError from '../../utils/app-error.js';
+import { BadRequestError } from '@/errors';
 
 const UUID_REGEX =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -19,7 +19,7 @@ export function validateCreatePaymentBody(
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError(errors.join(', '));
 	}
 
 	return { rentalOrderId: body.rentalOrderId };
@@ -43,7 +43,7 @@ export function validateConfirmPaymentBody(
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError(errors.join(', '));
 	}
 
 	return { transactionId: body.transactionId.trim() };
@@ -51,7 +51,7 @@ export function validateConfirmPaymentBody(
 
 export function validatePaymentIdParam(id: unknown): string {
 	if (!id || typeof id !== 'string' || !UUID_REGEX.test(id)) {
-		throw new AppError(400, 'id must be a valid UUID');
+		throw new BadRequestError('id must be a valid UUID');
 	}
 	return id;
 }

@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import type { AuthRequest } from '../../middlewares/auth.middleware.js';
-import AppError from '../../utils/app-error.js';
+import { BadRequestError, ForbiddenError } from '@/errors';
 import catchAsync from '../../utils/catch-async.js';
 import sendResponse from '../../utils/send-response.js';
 import { authService } from './auth.service.js';
@@ -10,24 +10,24 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
 
 	// Undefined/null/empty checks
 	if (name === undefined || name === null || name === '') {
-		throw new AppError(400, 'Name is required');
+		throw new BadRequestError('Name is required');
 	}
 	if (email === undefined || email === null || email === '') {
-		throw new AppError(400, 'Email is required');
+		throw new BadRequestError('Email is required');
 	}
 	if (password === undefined || password === null || password === '') {
-		throw new AppError(400, 'Password is required');
+		throw new BadRequestError('Password is required');
 	}
 
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	if (!emailRegex.test(email)) {
-		throw new AppError(400, 'Invalid email format');
+		throw new BadRequestError('Invalid email format');
 	}
 	if (password.length < 8) {
-		throw new AppError(400, 'Password must be at least 8 characters long');
+		throw new BadRequestError('Password must be at least 8 characters long');
 	}
 	if (role && role !== 'CUSTOMER' && role !== 'PROVIDER') {
-		throw new AppError(400, 'Role must be either CUSTOMER or PROVIDER');
+		throw new BadRequestError('Role must be either CUSTOMER or PROVIDER');
 	}
 
 	const result = await authService.register({
@@ -52,10 +52,10 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 
 	// Undefined/null/empty checks as requested (no Zod)
 	if (email === undefined || email === null || email === '') {
-		throw new AppError(400, 'Email is required');
+		throw new BadRequestError('Email is required');
 	}
 	if (password === undefined || password === null || password === '') {
-		throw new AppError(400, 'Password is required');
+		throw new BadRequestError('Password is required');
 	}
 
 	const result = await authService.login(req.body);
@@ -88,7 +88,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 
 const getMe = catchAsync(async (req: AuthRequest, res: Response) => {
 	if (!req.user) {
-		throw new AppError(401, 'Unauthorized');
+		throw new ForbiddenError('Unauthorized');
 	}
 	const userId = req.user.id;
 	const user = await authService.getProfile(userId);
@@ -103,13 +103,13 @@ const getMe = catchAsync(async (req: AuthRequest, res: Response) => {
 
 const updateMe = catchAsync(async (req: AuthRequest, res: Response) => {
 	if (!req.user) {
-		throw new AppError(401, 'Unauthorized');
+		throw new ForbiddenError('Unauthorized');
 	}
 	const userId = req.user.id;
 	const { name, phone, address } = req.body;
 
 	if (name !== undefined && (name === null || String(name).trim() === '')) {
-		throw new AppError(400, 'Name cannot be empty');
+		throw new BadRequestError('Name cannot be empty');
 	}
 
 	const updatedUser = await authService.updateProfile(userId, {

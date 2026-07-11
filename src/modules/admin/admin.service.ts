@@ -4,7 +4,7 @@ import type {
 	UserStatus,
 } from '../../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import AppError from '../../utils/app-error.js';
+import { BadRequestError, NotFoundError } from '@/errors';
 
 const getAllUsers = async (filters: {
 	role?: Role;
@@ -46,7 +46,7 @@ const updateUserStatus = async (id: string, status: UserStatus) => {
 	});
 
 	if (!user) {
-		throw new AppError(404, 'User not found');
+		throw new NotFoundError('User not found');
 	}
 
 	const updatedUser = await prisma.user.update({
@@ -152,7 +152,7 @@ const createCategory = async (input: {
 	});
 
 	if (existing) {
-		throw new AppError(400, 'Category with this name already exists');
+		throw new BadRequestError('Category with this name already exists');
 	}
 
 	const category = await prisma.category.create({
@@ -174,7 +174,7 @@ const updateCategory = async (
 	});
 
 	if (!category) {
-		throw new AppError(404, 'Category not found');
+		throw new NotFoundError('Category not found');
 	}
 
 	if (input.name) {
@@ -182,7 +182,7 @@ const updateCategory = async (
 			where: { name: input.name },
 		});
 		if (existing && existing.id !== id) {
-			throw new AppError(400, 'Category with this name already exists');
+throw new BadRequestError('Category with this name already exists');
 		}
 	}
 
@@ -205,7 +205,7 @@ const deleteCategory = async (id: string) => {
 	});
 
 	if (!category) {
-		throw new AppError(404, 'Category not found');
+		throw new NotFoundError('Category not found');
 	}
 
 	const associatedGearsCount = await prisma.gearItem.count({
@@ -213,8 +213,7 @@ const deleteCategory = async (id: string) => {
 	});
 
 	if (associatedGearsCount > 0) {
-		throw new AppError(
-			400,
+		throw new BadRequestError(
 			'Cannot delete category with associated gear items',
 		);
 	}

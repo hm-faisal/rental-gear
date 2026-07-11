@@ -1,5 +1,5 @@
 import { RentalStatus } from '../../../generated/prisma/index.js';
-import AppError from '../../utils/app-error.js';
+import { BadRequestError } from '@/errors';
 
 const UUID_REGEX =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -77,7 +77,7 @@ export function validateGearItemInput(
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError(errors.join(', '));
 	}
 
 	return {
@@ -110,9 +110,8 @@ export function validateOrderStatusUpdate(body: Record<string, unknown>): {
 		status !== 'PICKED_UP' &&
 		status !== 'RETURNED'
 	) {
-		throw new AppError(
-			400,
-			"status must be one of 'CONFIRMED', 'PICKED_UP', 'RETURNED'",
+		throw new BadRequestError(
+			"Status must be one of 'CONFIRMED', 'PICKED_UP', 'RETURNED'",
 		);
 	}
 	return { status };
@@ -120,14 +119,14 @@ export function validateOrderStatusUpdate(body: Record<string, unknown>): {
 
 export function validateOrderIdParam(id: unknown): string {
 	if (!id || typeof id !== 'string' || !UUID_REGEX.test(id)) {
-		throw new AppError(400, 'Invalid order id');
+		throw new BadRequestError('Invalid order ID');
 	}
 	return id;
 }
 
 export function validateGearIdParam(id: unknown): string {
 	if (!id || typeof id !== 'string' || !UUID_REGEX.test(id)) {
-		throw new AppError(400, 'Invalid gear item id');
+		throw new BadRequestError('Invalid gear item ID');
 	}
 	return id;
 }
@@ -176,7 +175,7 @@ export function validateOrderListQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError(errors.join(', '));
 	}
 
 	return { status, page, limit };

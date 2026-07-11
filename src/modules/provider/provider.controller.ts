@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 import type { AuthRequest } from '../../middlewares/auth.middleware.js';
-import AppError from '../../utils/app-error.js';
+import { ForbiddenError } from '@/errors';
 import catchAsync from '../../utils/catch-async.js';
 import sendResponse from '../../utils/send-response.js';
 import { providerService } from './provider.service.js';
@@ -15,7 +15,7 @@ import {
 const getProviderId = (req: AuthRequest): string => {
 	const providerId = req.user?.id;
 	if (!providerId) {
-		throw new AppError(401, 'Unauthorized');
+		throw new ForbiddenError('Unauthorized');
 	}
 	return providerId;
 };

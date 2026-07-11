@@ -1,4 +1,4 @@
-import AppError from '@/utils/app-error';
+import { BadRequestError } from '@/errors';
 
 export interface GearListFilters {
 	category?: string;
@@ -86,7 +86,7 @@ export function validateGearListQuery(
 
 	if (errors.length > 0) {
 		errors.forEach((errorMsg) => {
-			throw new AppError(400, errorMsg);
+			throw new BadRequestError(errorMsg);
 		});
 	}
 
@@ -104,7 +104,7 @@ export function validateGearListQuery(
 
 export function validateGearIdParam(id: unknown): string {
 	if (!id || typeof id !== 'string' || !UUID_REGEX.test(id)) {
-		throw new AppError(400, 'Invalid gear item id');
+		throw new BadRequestError('Invalid gear item ID');
 	}
 	return id;
 }

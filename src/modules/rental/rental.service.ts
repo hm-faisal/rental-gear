@@ -1,6 +1,6 @@
 import { RentalStatus } from '../../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import AppError from '../../utils/app-error.js';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '@/errors';
 import type { RentalCreateInput } from './rental.validation.js';
 
 const createRental = async (customerId: string, payload: RentalCreateInput) => {
@@ -17,11 +17,11 @@ const createRental = async (customerId: string, payload: RentalCreateInput) => {
 		});
 
 		if (!gear) {
-			throw new AppError(404, `Gear item not found: ${item.gearItemId}`);
+			throw new NotFoundError(`Gear item not found: ${item.gearItemId}`);
 		}
 
 		if (!gear.isAvailable) {
-			throw new AppError(400, `Gear item is not available: ${gear.name}`);
+			throw new BadRequestError(`Gear item is not available: ${gear.name}`);
 		}
 
 		gearItemsData.push(gear);
@@ -72,8 +72,7 @@ const createRental = async (customerId: string, payload: RentalCreateInput) => {
 
 		const availableQty = gear.stockQuantity - reservedQty;
 		if (item.quantity > availableQty) {
-			throw new AppError(
-				409,
+			throw new ConflictError(
 				`One or more gear items unavailable for the requested dates`,
 			);
 		}
@@ -198,12 +197,11 @@ const getRentalOrderById = async (customerId: string, orderId: string) => {
 	});
 
 	if (!order) {
-		throw new AppError(404, 'Rental order not found');
+		throw new NotFoundError('Rental order not found');
 	}
 
 	if (order.customerId !== customerId) {
-		throw new AppError(
-			403,
+		throw new ForbiddenError(
 			'You do not have permission to access this resource',
 		);
 	}
@@ -217,18 +215,17 @@ const cancelRentalOrder = async (customerId: string, orderId: string) => {
 	});
 
 	if (!order) {
-		throw new AppError(404, 'Rental order not found');
+		throw new NotFoundError('Rental order not found');
 	}
 
 	if (order.customerId !== customerId) {
-		throw new AppError(
-			403,
+		throw new ForbiddenError(
 			'You do not have permission to access this resource',
 		);
 	}
 
 	if (order.status !== RentalStatus.PLACED) {
-		throw new AppError(409, 'Order cannot be cancelled in its current status');
+		throw new ConflictError('Order cannot be cancelled in its current status');
 	}
 
 	const updatedOrder = await prisma.rentalOrder.update({

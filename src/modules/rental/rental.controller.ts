@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 import type { AuthRequest } from '../../middlewares/auth.middleware.js';
-import AppError from '../../utils/app-error.js';
+import { ForbiddenError } from '@/errors';
 import catchAsync from '../../utils/catch-async.js';
 import sendResponse from '../../utils/send-response.js';
 import { rentalService } from './rental.service.js';
@@ -13,7 +13,7 @@ import {
 const getCustomerId = (req: AuthRequest): string => {
 	const customerId = req.user?.id;
 	if (!customerId) {
-		throw new AppError(401, 'Unauthorized');
+		throw new ForbiddenError('Unauthorized');
 	}
 	return customerId;
 };

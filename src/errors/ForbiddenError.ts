@@ -1,7 +1,7 @@
-import AppError from '@/utils/app-error';
+import { AppError } from './app-error';
 
 export class ForbiddenError extends AppError {
-	constructor(message: string) {
-		super(403, message);
+	constructor(message: string, errorDetails?: unknown) {
+		super(403, message, errorDetails);
 	}
 }

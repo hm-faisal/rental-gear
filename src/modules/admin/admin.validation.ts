@@ -1,16 +1,16 @@
+import { BadRequestError } from '@/errors';
 import {
 	RentalStatus,
 	Role,
 	UserStatus,
 } from '../../../generated/prisma/index.js';
-import AppError from '../../utils/app-error.js';
 
 const UUID_REGEX =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function validateIdParam(id: unknown): string {
 	if (!id || typeof id !== 'string' || !UUID_REGEX.test(id)) {
-		throw new AppError(400, 'Invalid id format');
+		throw new BadRequestError('Invalid id format');
 	}
 	return id;
 }
@@ -76,7 +76,7 @@ export function validateUserListQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError('Query parameter error', errors.join(', '));
 	}
 
 	return { role, status, page, limit };
@@ -90,13 +90,12 @@ export function validateUserStatusUpdate(body: Record<string, unknown>): {
 		body.status === null ||
 		String(body.status).trim() === ''
 	) {
-		throw new AppError(400, 'status is required');
+		throw new BadRequestError('status is required');
 	}
 
 	const statusStr = String(body.status).toUpperCase();
 	if (!Object.values(UserStatus).includes(statusStr as UserStatus)) {
-		throw new AppError(
-			400,
+		throw new BadRequestError(
 			`status must be one of: ${Object.values(UserStatus)
 				.map((s) => s.toLowerCase())
 				.join(', ')}`,
@@ -137,7 +136,7 @@ export function validatePaginationQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError('Pagination query errors', errors.join(', '));
 	}
 
 	return { page, limit };
@@ -187,7 +186,7 @@ export function validateRentalListQuery(query: Record<string, unknown>): {
 	}
 
 	if (errors.length > 0) {
-		throw new AppError(400, errors.join(', '));
+		throw new BadRequestError(errors.join(', '));
 	}
 
 	return { status, page, limit };
@@ -202,7 +201,7 @@ export function validateCategoryCreateInput(body: Record<string, unknown>): {
 		body.name === null ||
 		String(body.name).trim() === ''
 	) {
-		throw new AppError(400, 'name is required');
+		throw new BadRequestError('Name is required');
 	}
 
 	return {
@@ -222,7 +221,7 @@ export function validateCategoryUpdateInput(body: Record<string, unknown>): {
 
 	if (body.name !== undefined && body.name !== null) {
 		if (String(body.name).trim() === '') {
-			throw new AppError(400, 'name cannot be empty');
+			throw new BadRequestError('Name cannot be empty');
 		}
 		result.name = String(body.name).trim();
 	}

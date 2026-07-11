@@ -2,11 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import express, { type Application } from 'express';
+import express, { type Application, raw } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yaml';
 import { env } from './config';
 import { errorHandler } from './middlewares/error.middlewares';
+import { paymentController } from './modules/payments/payment.controller';
+import { paymentRouter } from './modules/payments/payment.routes';
 import applicationRoutes from './routes';
 
 const app: Application = express();
@@ -32,6 +34,15 @@ try {
 }
 
 /*
+ * Payments webhook routes
+ */
+app.post(
+	'/api/payments/webhook',
+	raw({ type: 'application/json' }),
+	paymentController.webhook,
+);
+
+/*
  * Middlewares
  */
 app.use(
@@ -42,7 +53,6 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-
 /*
  * Routes
  */

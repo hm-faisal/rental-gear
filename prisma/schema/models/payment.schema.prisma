@@ -1,0 +1,18 @@
+model Payment {
+  id            String        @id @default(uuid())
+  transactionId String        @unique // Stripe PaymentIntent / Checkout Session ID
+  rentalOrderId String
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String        @default("usd")
+  method        PaymentMethod @default(STRIPE)
+  status        PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  rentalOrder RentalOrder @relation(fields: [rentalOrderId], references: [id], onDelete: Cascade)
+
+  @@index([rentalOrderId])
+  @@index([status])
+  @@map("payments")
+}

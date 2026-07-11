@@ -1,0 +1,24 @@
+model GearItem {
+  id            String   @id @default(uuid())
+  providerId    String
+  categoryId    String
+  name          String
+  description   String?
+  brand         String?
+  price         Decimal  @db.Decimal(10, 2)
+  stockQuantity Int      @default(0)
+  isAvailable   Boolean  @default(true)
+  images        String[] // Postgres text[]; use Json if on MySQL/SQLite
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  provider         User              @relation("ProviderGear", fields: [providerId], references: [id], onDelete: Cascade)
+  category         Category          @relation(fields: [categoryId], references: [id])
+  rentalOrderItems RentalOrderItem[]
+  reviews          Review[]
+
+  @@index([categoryId])
+  @@index([providerId])
+  @@index([brand])
+  @@map("gear_items")
+}

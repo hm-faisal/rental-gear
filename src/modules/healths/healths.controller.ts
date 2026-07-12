@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import catchAsync from '@/utils/catch-async';
-import sendResponse from '@/utils/send-response';
+import catchAsync from '../../utils/catch-async';
+import sendResponse from '../../utils/send-response';
 
 const getHealth = catchAsync((_req: Request, res: Response) => {
 	sendResponse(res, {

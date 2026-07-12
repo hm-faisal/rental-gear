@@ -15,13 +15,7 @@
 		"noUncheckedSideEffectImports": true,
 		"moduleDetection": "force",
 		"skipLibCheck": true,
-		"paths": {
-			"@/*": ["./src/*"]
-		}
 	},
 	"include": ["src/**/*.ts", "prisma.config.ts", "prisma/seed.ts"],
-	"exclude": ["dist", "node_modules"],
-	"tsc-alias": {
-		"resolveFullPaths": true
-	}
+	"exclude": ["dist", "node_modules"]
 }

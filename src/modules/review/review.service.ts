@@ -1,66 +1,73 @@
-import { RentalStatus } from '../../../generated/prisma/index.js';
+import { RentalStatus } from '../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '@/errors';
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from '../../errors';
 import type { ReviewCreateInput } from './review.validation.js';
 
 const createReview = async (customerId: string, payload: ReviewCreateInput) => {
-	const { rentalOrderId, gearItemId, rating, comment } = payload;
+  const { rentalOrderId, gearItemId, rating, comment } = payload;
 
-	// 1. Get the rental order and its items
-	const order = await prisma.rentalOrder.findUnique({
-		where: { id: rentalOrderId },
-		include: {
-			items: true,
-		},
-	});
+  // 1. Get the rental order and its items
+  const order = await prisma.rentalOrder.findUnique({
+    where: { id: rentalOrderId },
+    include: {
+      items: true,
+    },
+  });
 
-	if (!order) {
-		throw new NotFoundError('Rental order not found');
-	}
+  if (!order) {
+    throw new NotFoundError('Rental order not found');
+  }
 
-	// 2. Verify authorization
-	if (order.customerId !== customerId) {
-		throw new ForbiddenError(
-			'You do not have permission to perform this action',
-		);
-	}
+  // 2. Verify authorization
+  if (order.customerId !== customerId) {
+    throw new ForbiddenError(
+      'You do not have permission to perform this action',
+    );
+  }
 
-	// 3. Verify order status is RETURNED
-	if (order.status !== RentalStatus.RETURNED) {
-		throw new ConflictError('Order not yet RETURNED');
-	}
+  // 3. Verify order status is RETURNED
+  if (order.status !== RentalStatus.RETURNED) {
+    throw new ConflictError('Order not yet RETURNED');
+  }
 
-	// 4. Verify the gear item was part of this order
-	const itemInOrder = order.items.some(
-		(item) => item.gearItemId === gearItemId,
-	);
-	if (!itemInOrder) {
-		throw new BadRequestError('This gear item was not part of the rental order');
-	}
+  // 4. Verify the gear item was part of this order
+  const itemInOrder = order.items.some(
+    (item) => item.gearItemId === gearItemId,
+  );
+  if (!itemInOrder) {
+    throw new BadRequestError(
+      'This gear item was not part of the rental order',
+    );
+  }
 
-	// 5. Verify review doesn't already exist for this rental order
-	const existingReview = await prisma.review.findUnique({
-		where: { rentalOrderId },
-	});
+  // 5. Verify review doesn't already exist for this rental order
+  const existingReview = await prisma.review.findUnique({
+    where: { rentalOrderId },
+  });
 
-	if (existingReview) {
-		throw new ConflictError('A review already exists for this order');
-	}
+  if (existingReview) {
+    throw new ConflictError('A review already exists for this order');
+  }
 
-	// 6. Create the review
-	const review = await prisma.review.create({
-		data: {
-			customerId,
-			gearItemId,
-			rentalOrderId,
-			rating,
-			comment: comment || null,
-		},
-	});
+  // 6. Create the review
+  const review = await prisma.review.create({
+    data: {
+      customerId,
+      gearItemId,
+      rentalOrderId,
+      rating,
+      comment: comment || null,
+    },
+  });
 
-	return review;
+  return review;
 };
 
 export const reviewService = {
-	createReview,
+  createReview,
 };

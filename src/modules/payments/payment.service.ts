@@ -1,8 +1,8 @@
 import type Stripe from 'stripe';
-import { env } from '@/config';
-import { ConflictError, ForbiddenError, NotFoundError } from '@/errors';
-import { prisma } from '@/lib/prisma';
-import { stripe } from '@/lib/stripe';
+import { env } from '../../config';
+import { ConflictError, ForbiddenError, NotFoundError } from '../../errors';
+import { prisma } from '../../lib/prisma';
+import { stripe } from '../../lib/stripe';
 
 const CURRENCY = 'usd';
 

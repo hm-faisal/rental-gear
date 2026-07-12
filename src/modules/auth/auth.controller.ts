@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { BadRequestError, ForbiddenError } from '@/errors';
+import { BadRequestError, ForbiddenError } from '../../errors';
 import type { AuthRequest } from '../../middlewares/auth.middleware.js';
 import catchAsync from '../../utils/catch-async.js';
 import sendResponse from '../../utils/send-response.js';

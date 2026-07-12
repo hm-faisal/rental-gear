@@ -1,13 +1,13 @@
 import { Router } from 'express';
-import { adminRoutes } from '@/modules/admin/admin.routes';
-import { authRoutes } from '@/modules/auth/auth.routes';
-import { gearController } from '@/modules/gear/gear.controller';
-import { gearRoutes } from '@/modules/gear/gear.routes';
-import { healthRoutes } from '@/modules/healths/healths.routes';
-import { paymentRouter } from '@/modules/payments/payment.routes';
-import { providerRoutes } from '@/modules/provider/provider.routes';
-import { rentalRoutes } from '@/modules/rental/rental.routes';
-import { reviewRoutes } from '@/modules/review/review.routes';
+import { adminRoutes } from '../modules/admin/admin.routes';
+import { authRoutes } from '../modules/auth/auth.routes';
+import { gearController } from '../modules/gear/gear.controller';
+import { gearRoutes } from '../modules/gear/gear.routes';
+import { healthRoutes } from '../modules/healths/healths.routes';
+import { paymentRouter } from '../modules/payments/payment.routes';
+import { providerRoutes } from '../modules/provider/provider.routes';
+import { rentalRoutes } from '../modules/rental/rental.routes';
+import { reviewRoutes } from '../modules/review/review.routes';
 
 type Route = {
 	path: string;

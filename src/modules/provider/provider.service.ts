@@ -1,6 +1,6 @@
-import { RentalStatus } from '../../../generated/prisma/index.js';
+import { RentalStatus } from '../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '@/errors';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../../errors';
 import type { GearItemInput } from './provider.validation.js';
 
 const addGearItem = async (providerId: string, input: GearItemInput) => {

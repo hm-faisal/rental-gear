@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import catchAsync from '@/utils/catch-async';
-import sendResponse from '@/utils/send-response';
+import catchAsync from '../../utils/catch-async';
+import sendResponse from '../../utils/send-response';
 import { gearService } from './gear.service';
 import { validateGearIdParam, validateGearListQuery } from './gear.validation';
 

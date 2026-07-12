@@ -1,9 +1,9 @@
-import { BadRequestError } from '@/errors';
+import { BadRequestError } from '../../errors';
 import {
 	RentalStatus,
 	Role,
 	UserStatus,
-} from '../../../generated/prisma/index.js';
+} from '../../generated/prisma/index.js';
 
 const UUID_REGEX =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

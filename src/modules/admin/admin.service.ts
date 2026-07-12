@@ -1,9 +1,9 @@
-import { BadRequestError, NotFoundError } from '@/errors';
+import { BadRequestError, NotFoundError } from '../../errors';
 import type {
 	RentalStatus,
 	Role,
 	UserStatus,
-} from '../../../generated/prisma/index.js';
+} from '../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
 
 const getAllUsers = async (filters: {

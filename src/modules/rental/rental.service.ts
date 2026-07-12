@@ -1,6 +1,6 @@
-import { RentalStatus } from '../../../generated/prisma/index.js';
+import { RentalStatus } from '../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '@/errors';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../../errors';
 import type { RentalCreateInput } from './rental.validation.js';
 
 const createRental = async (customerId: string, payload: RentalCreateInput) => {

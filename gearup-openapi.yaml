@@ -11,9 +11,9 @@ info:
     name: GearUp API Support
 servers:
   - url: http://localhost:3000/api
-    description: development
-  - url: https://staging-api.gearup.example.com/api
-    description: Staging
+    description: Development
+  - url: https://rental-gear-fai.onrender.com/api
+    description: Production
 
 tags:
   - name: Auth

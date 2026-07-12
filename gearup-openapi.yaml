@@ -54,7 +54,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/User"
         "400":
           $ref: "#/components/responses/ValidationError"
         "409":
@@ -84,7 +89,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+                            description: JWT access token
         "401":
           description: Invalid credentials
           content:
@@ -105,7 +119,13 @@ paths:
           description: Current user profile
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/User" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -168,7 +188,13 @@ paths:
           description: Gear item details
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/GearItem" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GearItem"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -183,8 +209,13 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: "#/components/schemas/Category" }
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/Category" }
 
   # ---------------- RENTAL ORDERS ----------------
   /rentals:
@@ -214,7 +245,13 @@ paths:
           description: Rental order created with status PLACED
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/RentalOrder" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RentalOrder"
         "400":
           $ref: "#/components/responses/ValidationError"
         "409":
@@ -260,7 +297,13 @@ paths:
           description: Rental order details
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/RentalOrder" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RentalOrder"
         "403":
           $ref: "#/components/responses/Forbidden"
         "404":
@@ -277,7 +320,13 @@ paths:
           description: Rental order cancelled
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/RentalOrder" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RentalOrder"
         "409":
           description: Order cannot be cancelled in its current status
           content:
@@ -304,15 +353,20 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  payment: { $ref: "#/components/schemas/Payment" }
-                  clientSecret:
-                    type: string
-                    description: Stripe PaymentIntent client secret for use with Stripe.js/Elements
-                  checkoutUrl:
-                    type: string
-                    description: Stripe-hosted Checkout URL, if using Checkout Sessions
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          payment: { $ref: "#/components/schemas/Payment" }
+                          clientSecret:
+                            type: string
+                            description: Stripe PaymentIntent client secret for use with Stripe.js/Elements
+                          checkoutUrl:
+                            type: string
+                            description: Stripe-hosted Checkout URL, if using Checkout Sessions
         "409":
           description: Order is not in a payable (CONFIRMED) status
           content:
@@ -339,7 +393,13 @@ paths:
           description: Current payment status
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Payment" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Payment"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -402,7 +462,13 @@ paths:
           description: Payment details
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Payment" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Payment"
         "403":
           $ref: "#/components/responses/Forbidden"
         "404":
@@ -423,7 +489,13 @@ paths:
           description: Gear item created
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/GearItem" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GearItem"
         "400":
           $ref: "#/components/responses/ValidationError"
 
@@ -443,7 +515,13 @@ paths:
           description: Gear item updated
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/GearItem" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GearItem"
         "403":
           $ref: "#/components/responses/Forbidden"
         "404":
@@ -511,7 +589,13 @@ paths:
           description: Rental order status updated
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/RentalOrder" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RentalOrder"
         "409":
           description: Requested status transition is not allowed
           content:
@@ -540,7 +624,13 @@ paths:
           description: Review created
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Review" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Review"
         "409":
           description: Order not yet RETURNED, or a review already exists for this order
           content:
@@ -599,7 +689,13 @@ paths:
           description: User status updated
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/User" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/User"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -675,7 +771,13 @@ paths:
           description: Category created
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Category" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Category"
 
   /admin/categories/{id}:
     put:
@@ -697,7 +799,13 @@ paths:
           description: Category updated
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Category" }
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Category"
     delete:
       tags: [Admin]
       summary: Delete a gear category
@@ -751,26 +859,53 @@ components:
     Error:
       type: object
       properties:
-        success: { type: boolean, example: false }
-        message: { type: string }
-        errors:
-          type: array
-          items: { type: string }
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errorDetails:
+          nullable: true
+          description: Additional error details (varies by error type)
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        statusCode:
+          type: integer
+        message:
+          type: string
+          nullable: true
 
     PaginatedResponse:
       type: object
       properties:
-        success: { type: boolean, example: true }
-        page: { type: integer, example: 1 }
-        limit: { type: integer, example: 20 }
-        total: { type: integer, example: 57 }
-
-    AuthResponse:
-      type: object
-      properties:
-        success: { type: boolean, example: true }
-        token: { type: string, description: "JWT access token" }
-        user: { $ref: "#/components/schemas/User" }
+        success:
+          type: boolean
+          example: true
+        statusCode:
+          type: integer
+        message:
+          type: string
+          nullable: true
+        meta:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 57
+            totalPage:
+              type: integer
+              example: 3
 
     User:
       type: object

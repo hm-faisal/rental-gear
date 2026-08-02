@@ -6,7 +6,16 @@ import { stripe } from '../../lib/stripe';
 
 const CURRENCY = 'usd';
 
-const createPaymentForOrder = async (customerId: string, rentalOrderId: string) => {
+const mapPayment = (payment: any) => ({
+	...payment,
+	status: payment.status.toLowerCase(),
+	method: payment.method.toLowerCase(),
+});
+
+const createPaymentForOrder = async (
+	customerId: string,
+	rentalOrderId: string,
+) => {
 	const order = await prisma.rentalOrder.findUnique({
 		where: { id: rentalOrderId },
 	});
@@ -44,8 +53,12 @@ const createPaymentForOrder = async (customerId: string, rentalOrderId: string) 
 			rentalOrderId: order.id,
 			customerId,
 		},
-		success_url: `${env.client_url}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-		cancel_url: `${env.client_url}/payments/cancel?rentalOrderId=${order.id}`,
+		success_url: `${env.client_url}/payment/success?session_id={CHECKOUT_SESSION_ID}&orderId=${order.id}`,
+		cancel_url: `${env.client_url}/payment/cancel?rentalOrderId=${order.id}`,
+	});
+
+	const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+		expand: ['payment_intent'],
 	});
 
 	const payment = await prisma.payment.create({
@@ -60,7 +73,10 @@ const createPaymentForOrder = async (customerId: string, rentalOrderId: string) 
 	});
 
 	return {
-		payment,
+		payment: mapPayment(payment),
+		clientSecret:
+			(expandedSession.payment_intent as Stripe.PaymentIntent)?.client_secret ??
+			null,
 		checkoutUrl: session.url,
 	};
 };
@@ -161,10 +177,15 @@ const confirmPayment = async (customerId: string, transactionId: string) => {
 		}
 	}
 
-	return prisma.payment.findUnique({ where: { transactionId } });
+	const updated = await prisma.payment.findUnique({ where: { transactionId } });
+	return mapPayment(updated);
 };
 
-const listPayments = async (customerId: string, page: number, limit: number) => {
+const listPayments = async (
+	customerId: string,
+	page: number,
+	limit: number,
+) => {
 	const where = { rentalOrder: { customerId } };
 
 	const [data, total] = await Promise.all([
@@ -178,7 +199,7 @@ const listPayments = async (customerId: string, page: number, limit: number) => 
 	]);
 
 	return {
-		data,
+		data: data.map(mapPayment),
 		page,
 		limit,
 		total,
@@ -189,18 +210,20 @@ const listPayments = async (customerId: string, page: number, limit: number) => 
 const getPaymentById = async (customerId: string, id: string) => {
 	const payment = await prisma.payment.findUnique({
 		where: { id },
-		include: { rentalOrder: { select: { customerId: true } } },
 	});
 
 	if (!payment) {
 		throw new NotFoundError('Payment not found');
 	}
-	if (payment.rentalOrder.customerId !== customerId) {
+
+	const order = await prisma.rentalOrder.findUnique({
+		where: { id: payment.rentalOrderId },
+	});
+	if (!order || order.customerId !== customerId) {
 		throw new ForbiddenError('You do not own this payment');
 	}
 
-	const { rentalOrder, ...rest } = payment;
-	return rest;
+	return mapPayment(payment);
 };
 
 export const paymentService = {

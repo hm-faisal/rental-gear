@@ -7,6 +7,7 @@ const router = Router();
 // Apply auth(['PROVIDER']) middleware to all routes in this router
 router.use(auth(['PROVIDER']));
 
+router.get('/gear', providerController.getMyGearItems);
 router.post('/gear', providerController.addGearItem);
 router.put('/gear/:id', providerController.updateGearItem);
 router.delete('/gear/:id', providerController.deleteGearItem);

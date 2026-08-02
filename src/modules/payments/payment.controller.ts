@@ -38,7 +38,10 @@ const confirm = catchAsync(async (req: AuthRequest, res: Response) => {
 		throw new ForbiddenError('You must be an authorized Customer');
 	}
 
-	const payment = await paymentService.confirmPayment(customerId, transactionId);
+	const payment = await paymentService.confirmPayment(
+		customerId,
+		transactionId,
+	);
 
 	sendResponse(res, {
 		statusCode: 200,

@@ -1,26 +1,7 @@
 import { NotFoundError } from '../../errors';
+import type { Prisma } from '../../generated/prisma';
 import { prisma } from '../../lib/prisma';
-import type { GearItem, Prisma, Review } from '../../../generated/prisma';
 import type { GearListFilters } from './gear.validation';
-
-type GearWithReviews = GearItem & {
-	category: { id: string; name: string };
-	reviews: Pick<Review, 'rating'>[];
-};
-
-function withAverageRating<T extends { reviews: Pick<Review, 'rating'>[] }>(
-	gear: T,
-) {
-	const ratings = gear.reviews.map((r) => r.rating);
-	const averageRating = ratings.length
-		? Number(
-				(ratings.reduce((sum, r) => sum + r, 0) / ratings.length).toFixed(2),
-			)
-		: null;
-
-	const { reviews, ...rest } = gear;
-	return { ...rest, averageRating, reviewCount: ratings.length };
-}
 
 const getAllGears = async (filters: GearListFilters) => {
 	const {
@@ -68,18 +49,24 @@ const getAllGears = async (filters: GearListFilters) => {
 	const query = await prisma.gearItem.findMany({
 		where,
 		include: {
-			category: { select: { id: true, name: true } },
 			reviews: { select: { rating: true } },
-			_count: true,
 		},
 		orderBy: { createdAt: 'desc' },
 		skip: (page - 1) * limit,
 		take: limit,
 	});
 
-	const mappedData = query.map((item) =>
-		withAverageRating(item as GearWithReviews),
-	);
+	const mappedData = query.map((item) => {
+		const ratings = item.reviews.map((r) => r.rating);
+		const averageRating = ratings.length
+			? Number(
+					(ratings.reduce((sum, r) => sum + r, 0) / ratings.length).toFixed(2),
+				)
+			: 0;
+
+		const { reviews, ...rest } = item;
+		return { ...rest, averageRating };
+	});
 
 	return {
 		data: mappedData,
@@ -94,12 +81,7 @@ const getGearById = async (id: string) => {
 	const gear = await prisma.gearItem.findUnique({
 		where: { id },
 		include: {
-			category: { select: { id: true, name: true } },
-			provider: { select: { id: true, name: true } },
-			reviews: {
-				orderBy: { createdAt: 'desc' },
-				include: { customer: { select: { id: true, name: true } } },
-			},
+			reviews: { select: { rating: true } },
 		},
 	});
 
@@ -107,7 +89,15 @@ const getGearById = async (id: string) => {
 		throw new NotFoundError('Gear item not found');
 	}
 
-	return withAverageRating(gear as GearWithReviews);
+	const ratings = gear.reviews.map((r) => r.rating);
+	const averageRating = ratings.length
+		? Number(
+				(ratings.reduce((sum, r) => sum + r, 0) / ratings.length).toFixed(2),
+			)
+		: 0;
+
+	const { reviews, ...rest } = gear;
+	return { ...rest, averageRating };
 };
 
 const getCategories = async () => {

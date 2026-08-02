@@ -1,7 +1,21 @@
+import {
+	BadRequestError,
+	ConflictError,
+	ForbiddenError,
+	NotFoundError,
+} from '../../errors';
 import { RentalStatus } from '../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../../errors';
 import type { RentalCreateInput } from './rental.validation.js';
+
+const formatDate = (date: Date): string =>
+	date.toISOString().split('T')[0] ?? '';
+
+const mapRentalOrder = (order: any) => ({
+	...order,
+	startDate: formatDate(new Date(order.startDate)),
+	endDate: formatDate(new Date(order.endDate)),
+});
 
 const createRental = async (customerId: string, payload: RentalCreateInput) => {
 	const { startDate, endDate, items } = payload;
@@ -129,7 +143,7 @@ const createRental = async (customerId: string, payload: RentalCreateInput) => {
 		return order;
 	});
 
-	return result;
+	return mapRentalOrder(result);
 };
 
 const getRentalOrders = async (
@@ -150,18 +164,7 @@ const getRentalOrders = async (
 	const orders = await prisma.rentalOrder.findMany({
 		where: whereClause,
 		include: {
-			items: {
-				include: {
-					gearItem: {
-						select: {
-							id: true,
-							name: true,
-							brand: true,
-							images: true,
-						},
-					},
-				},
-			},
+			items: true,
 		},
 		orderBy: { createdAt: 'desc' },
 		skip: (page - 1) * limit,
@@ -169,7 +172,7 @@ const getRentalOrders = async (
 	});
 
 	return {
-		data: orders,
+		data: orders.map(mapRentalOrder),
 		page,
 		limit,
 		total,
@@ -181,18 +184,7 @@ const getRentalOrderById = async (customerId: string, orderId: string) => {
 	const order = await prisma.rentalOrder.findUnique({
 		where: { id: orderId },
 		include: {
-			items: {
-				include: {
-					gearItem: {
-						select: {
-							id: true,
-							name: true,
-							brand: true,
-							images: true,
-						},
-					},
-				},
-			},
+			items: true,
 		},
 	});
 
@@ -206,7 +198,7 @@ const getRentalOrderById = async (customerId: string, orderId: string) => {
 		);
 	}
 
-	return order;
+	return mapRentalOrder(order);
 };
 
 const cancelRentalOrder = async (customerId: string, orderId: string) => {
@@ -238,7 +230,7 @@ const cancelRentalOrder = async (customerId: string, orderId: string) => {
 		},
 	});
 
-	return updatedOrder;
+	return mapRentalOrder(updatedOrder);
 };
 
 export const rentalService = {

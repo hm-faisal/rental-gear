@@ -6,7 +6,7 @@ dotenv.config({
 });
 
 export default {
-	port: process.env.PORT || 3000,
+	port: process.env.PORT || 4000,
 	database_url: process.env.DATABASE_URL,
 	app_url: process.env.APP_URL,
 	client_url: process.env.CLIENT_URL ?? 'http://localhost:3000',

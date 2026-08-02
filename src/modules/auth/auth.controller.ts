@@ -39,11 +39,18 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
 		address,
 	});
 
+	res.cookie('accessToken', result.accessToken, {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production',
+		sameSite: 'strict',
+		maxAge: 24 * 60 * 60 * 1000,
+	});
+
 	sendResponse(res, {
 		statusCode: 201,
 		success: true,
 		message: 'User registered successfully',
-		data: result,
+		data: result.user,
 	});
 });
 
@@ -74,7 +81,6 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 		message: 'User logged in successfully',
 		data: {
 			accessToken: result.accessToken,
-			user: result.user,
 		},
 	});
 });

@@ -6,6 +6,28 @@ import type {
 } from '../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
 
+const mapUser = <T extends { role?: string; status?: string }>(user: T) => ({
+	...user,
+	role: user.role?.toLowerCase(),
+	status: user.status?.toLowerCase(),
+});
+
+const formatDate = (date: Date): string =>
+	date.toISOString().split('T')[0] ?? '';
+
+const stripRentalOrder = (order: any) => {
+	const { items, customer: _customer, ...rest } = order;
+	return {
+		...rest,
+		startDate: formatDate(new Date(rest.startDate)),
+		endDate: formatDate(new Date(rest.endDate)),
+		items: items.map((item: any) => {
+			const { gearItem: _gi, ...itemRest } = item;
+			return itemRest;
+		}),
+	};
+};
+
 const getAllUsers = async (filters: {
 	role?: Role;
 	status?: UserStatus;
@@ -32,7 +54,7 @@ const getAllUsers = async (filters: {
 	});
 
 	return {
-		data: users,
+		data: users.map(mapUser),
 		page,
 		limit,
 		total,
@@ -55,7 +77,7 @@ const updateUserStatus = async (id: string, status: UserStatus) => {
 		omit: { passwordHash: true },
 	});
 
-	return updatedUser;
+	return mapUser(updatedUser);
 };
 
 const getAllGears = async (filters: { page: number; limit: number }) => {
@@ -78,7 +100,7 @@ const getAllGears = async (filters: { page: number; limit: number }) => {
 			? Number(
 					(ratings.reduce((sum, r) => sum + r, 0) / ratings.length).toFixed(2),
 				)
-			: null;
+			: 0;
 		const { reviews, ...rest } = gear;
 		return { ...rest, averageRating };
 	});
@@ -135,7 +157,7 @@ const getAllRentals = async (filters: {
 	});
 
 	return {
-		data: rentals,
+		data: rentals.map(stripRentalOrder),
 		page,
 		limit,
 		total,

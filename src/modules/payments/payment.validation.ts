@@ -22,7 +22,9 @@ export function validateCreatePaymentBody(
 		throw new BadRequestError('Validation failed', errors);
 	}
 
-	return { rentalOrderId: body.rentalOrderId };
+	return {
+		rentalOrderId: body.rentalOrderId,
+	};
 }
 
 export interface ConfirmPaymentBody {

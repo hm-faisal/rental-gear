@@ -6,12 +6,18 @@ import { validateGearIdParam, validateGearListQuery } from './gear.validation';
 
 const getGears = catchAsync(async (req: Request, res: Response) => {
 	const filters = validateGearListQuery(req.query);
-	const data = await gearService.getAllGears(filters);
+	const result = await gearService.getAllGears(filters);
 
 	sendResponse(res, {
-		success: true,
 		statusCode: 200,
-		data,
+		success: true,
+		meta: {
+			page: result.page,
+			limit: result.limit,
+			total: result.total,
+			totalPage: result.totalPages,
+		},
+		data: result.data,
 	});
 });
 

@@ -1,6 +1,6 @@
 import type { Response } from 'express';
-import type { AuthRequest } from '../../middlewares/auth.middleware.js';
 import { ForbiddenError } from '../../errors';
+import type { AuthRequest } from '../../middlewares/auth.middleware.js';
 import catchAsync from '../../utils/catch-async.js';
 import sendResponse from '../../utils/send-response.js';
 import { providerService } from './provider.service.js';
@@ -30,6 +30,19 @@ const addGearItem = catchAsync(async (req: AuthRequest, res: Response) => {
 		statusCode: 201,
 		success: true,
 		message: 'Gear item created successfully',
+		data: gear,
+	});
+});
+
+const getMyGearItems = catchAsync(async (req: AuthRequest, res: Response) => {
+	const providerId = getProviderId(req);
+
+	const gear = await providerService.getMyGearItems(providerId);
+
+	sendResponse(res, {
+		statusCode: 200,
+		success: true,
+		message: 'Gear item list retrieved successfully',
 		data: gear,
 	});
 });
@@ -107,6 +120,7 @@ const updateOrderStatus = catchAsync(
 
 export const providerController = {
 	addGearItem,
+	getMyGearItems,
 	updateGearItem,
 	deleteGearItem,
 	getIncomingOrders,

@@ -39,12 +39,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 7.8.0
- * Query Engine version: 3c6e192761c0362d496ed980de936e2f3cebcd3a
+ * Prisma Client JS version: 7.9.1
+ * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
  */
 Prisma.prismaVersion = {
-  client: "7.8.0",
-  engine: "3c6e192761c0362d496ed980de936e2f3cebcd3a"
+  client: "7.9.1",
+  engine: "e922089b7d7502aff4249d5da3420f6fa55fc6ad"
 }
 
 Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
@@ -227,8 +227,8 @@ exports.Prisma.ModelName = {
  */
 const config = {
   "previewFeatures": [],
-  "clientVersion": "7.8.0",
-  "engineVersion": "3c6e192761c0362d496ed980de936e2f3cebcd3a",
+  "clientVersion": "7.9.1",
+  "engineVersion": "e922089b7d7502aff4249d5da3420f6fa55fc6ad",
   "activeProvider": "postgresql",
   "inlineSchema": "enum Role {\n  CUSTOMER\n  PROVIDER\n  ADMIN\n}\n\nenum UserStatus {\n  ACTIVE\n  SUSPENDED\n}\n\nenum RentalStatus {\n  PLACED\n  CONFIRMED\n  PAID\n  PICKED_UP\n  RETURNED\n  CANCELLED\n}\n\nenum PaymentStatus {\n  PENDING\n  COMPLETED\n  FAILED\n}\n\nenum PaymentMethod {\n  STRIPE\n}\n\nmodel Category {\n  id          String  @id @default(uuid())\n  name        String  @unique\n  description String?\n\n  gearItems GearItem[]\n\n  @@map(\"categories\")\n}\n\nmodel GearItem {\n  id            String   @id @default(uuid())\n  providerId    String\n  categoryId    String\n  name          String\n  description   String?\n  brand         String?\n  price         Decimal  @db.Decimal(10, 2)\n  stockQuantity Int      @default(0)\n  isAvailable   Boolean  @default(true)\n  images        String[] // Postgres text[]; use Json if on MySQL/SQLite\n  createdAt     DateTime @default(now())\n  updatedAt     DateTime @updatedAt\n\n  provider         User              @relation(\"ProviderGear\", fields: [providerId], references: [id], onDelete: Cascade)\n  category         Category          @relation(fields: [categoryId], references: [id])\n  rentalOrderItems RentalOrderItem[]\n  reviews          Review[]\n\n  @@index([categoryId])\n  @@index([providerId])\n  @@index([brand])\n  @@map(\"gear_items\")\n}\n\nmodel Payment {\n  id            String        @id @default(uuid())\n  transactionId String        @unique // Stripe PaymentIntent / Checkout Session ID\n  rentalOrderId String\n  amount        Decimal       @db.Decimal(10, 2)\n  currency      String        @default(\"usd\")\n  method        PaymentMethod @default(STRIPE)\n  status        PaymentStatus @default(PENDING)\n  paidAt        DateTime?\n  createdAt     DateTime      @default(now())\n  updatedAt     DateTime      @updatedAt\n\n  rentalOrder RentalOrder @relation(fields: [rentalOrderId], references: [id], onDelete: Cascade)\n\n  @@index([rentalOrderId])\n  @@index([status])\n  @@map(\"payments\")\n}\n\nmodel RentalOrder {\n  id          String       @id @default(uuid())\n  customerId  String\n  startDate   DateTime\n  endDate     DateTime\n  totalAmount Decimal      @db.Decimal(10, 2)\n  status      RentalStatus @default(PLACED)\n  createdAt   DateTime     @default(now())\n  updatedAt   DateTime     @updatedAt\n\n  customer User              @relation(\"CustomerRentals\", fields: [customerId], references: [id], onDelete: Cascade)\n  items    RentalOrderItem[]\n  payments Payment[]\n  review   Review?\n\n  @@index([customerId])\n  @@index([status])\n  @@map(\"rental_orders\")\n}\n\nmodel RentalOrderItem {\n  id            String  @id @default(uuid())\n  rentalOrderId String\n  gearItemId    String\n  quantity      Int     @default(1)\n  price         Decimal @db.Decimal(10, 2)\n\n  rentalOrder RentalOrder @relation(fields: [rentalOrderId], references: [id], onDelete: Cascade)\n  gearItem    GearItem    @relation(fields: [gearItemId], references: [id])\n\n  @@index([rentalOrderId])\n  @@index([gearItemId])\n  @@map(\"rental_order_items\")\n}\n\nmodel Review {\n  id            String   @id @default(uuid())\n  customerId    String\n  gearItemId    String\n  rentalOrderId String   @unique // one review per completed rental order\n  rating        Int // 1–5\n  comment       String?\n  createdAt     DateTime @default(now())\n\n  customer    User        @relation(\"CustomerReviews\", fields: [customerId], references: [id], onDelete: Cascade)\n  gearItem    GearItem    @relation(fields: [gearItemId], references: [id], onDelete: Cascade)\n  rentalOrder RentalOrder @relation(fields: [rentalOrderId], references: [id], onDelete: Cascade)\n\n  @@index([gearItemId])\n  @@index([customerId])\n  @@map(\"reviews\")\n}\n\nmodel User {\n  id           String     @id @default(uuid())\n  name         String\n  email        String     @unique\n  passwordHash String\n  role         Role\n  phone        String?\n  address      String?\n  status       UserStatus @default(ACTIVE)\n  createdAt    DateTime   @default(now())\n  updatedAt    DateTime   @updatedAt\n\n  // Provider side: gear owned by this user (when role = PROVIDER)\n  gearItems GearItem[] @relation(\"ProviderGear\")\n\n  // Customer side\n  rentalOrders RentalOrder[] @relation(\"CustomerRentals\")\n  reviews      Review[]      @relation(\"CustomerReviews\")\n\n  @@map(\"users\")\n}\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n"
 }

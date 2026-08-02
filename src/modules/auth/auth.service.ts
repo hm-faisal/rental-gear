@@ -1,5 +1,18 @@
 import { env } from '../../config/index.js';
-import { BadRequestError, ForbiddenError, NotFoundError } from '../../errors';
+import {
+	BadRequestError,
+	ConflictError,
+	ForbiddenError,
+	NotFoundError,
+	UnauthorizedError,
+} from '../../errors';
+
+const mapUser = <T extends { role?: string; status?: string }>(user: T) => ({
+	...user,
+	role: user.role?.toLowerCase(),
+	status: user.status?.toLowerCase(),
+});
+
 import { Role } from '../../generated/prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { comparePassword, hashPassword } from '../../utils/bcrypt.js';
@@ -34,7 +47,7 @@ const register = async (payload: RegisterPayload) => {
 		where: { email },
 	});
 	if (existingUser) {
-		throw new BadRequestError('A user with this email already exists');
+		throw new ConflictError('A user with this email already exists');
 	}
 
 	// Hash password
@@ -53,7 +66,14 @@ const register = async (payload: RegisterPayload) => {
 		omit: { passwordHash: true },
 	});
 
-	return user;
+	// Generate access token
+	const accessToken = generateToken(
+		{ id: user.id, email: user.email, role: user.role },
+		env.jwt_access_secret || 'fallback_access_secret',
+		env.jwt_access_expires_in || '1d',
+	);
+
+	return { user: mapUser(user), accessToken };
 };
 
 const login = async (payload: LoginPayload) => {
@@ -64,13 +84,13 @@ const login = async (payload: LoginPayload) => {
 		where: { email },
 	});
 	if (!user) {
-		throw new NotFoundError('User not found');
+		throw new UnauthorizedError('Invalid email or password');
 	}
 
 	// Verify password
 	const isPasswordMatched = await comparePassword(password, user.passwordHash);
 	if (!isPasswordMatched) {
-		throw new ForbiddenError('Invalid password');
+		throw new UnauthorizedError('Invalid email or password');
 	}
 
 	// Check if user is suspended
@@ -85,9 +105,7 @@ const login = async (payload: LoginPayload) => {
 		env.jwt_access_expires_in || '1d',
 	);
 
-	return {
-		accessToken,
-	};
+	return { accessToken };
 };
 
 const getProfile = async (id: string) => {
@@ -96,9 +114,9 @@ const getProfile = async (id: string) => {
 		omit: { passwordHash: true },
 	});
 	if (!user) {
-		throw new NotFoundError('User not found');
+		throw new UnauthorizedError('User not found');
 	}
-	return user;
+	return mapUser(user);
 };
 
 const updateProfile = async (

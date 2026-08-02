@@ -1,7 +1,28 @@
+import {
+	BadRequestError,
+	ConflictError,
+	ForbiddenError,
+	NotFoundError,
+} from '../../errors';
 import { RentalStatus } from '../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../../errors';
 import type { GearItemInput } from './provider.validation.js';
+
+const formatDate = (date: Date): string =>
+	date.toISOString().split('T')[0] ?? '';
+
+const stripRentalOrder = (order: any) => {
+	const { items, customer: _customer, ...rest } = order;
+	return {
+		...rest,
+		startDate: formatDate(new Date(rest.startDate)),
+		endDate: formatDate(new Date(rest.endDate)),
+		items: items.map((item: any) => {
+			const { gearItem: _gi, ...itemRest } = item;
+			return itemRest;
+		}),
+	};
+};
 
 const addGearItem = async (providerId: string, input: GearItemInput) => {
 	// Verify category exists
@@ -140,7 +161,7 @@ const getIncomingOrders = async (
 	});
 
 	return {
-		data: orders,
+		data: orders.map(stripRentalOrder),
 		page,
 		limit,
 		total,
@@ -182,21 +203,21 @@ const updateOrderStatus = async (
 	// State transitions check
 	if (status === 'CONFIRMED') {
 		if (order.status !== RentalStatus.PLACED) {
-		throw new ConflictError(
-			'Order can only be confirmed when it is in PLACED status',
-		);
+			throw new ConflictError(
+				'Order can only be confirmed when it is in PLACED status',
+			);
 		}
 	} else if (status === 'PICKED_UP') {
 		if (order.status !== RentalStatus.PAID) {
-		throw new ConflictError(
-			'Order can only be marked picked up when it is in PAID status',
-		);
+			throw new ConflictError(
+				'Order can only be marked picked up when it is in PAID status',
+			);
 		}
 	} else if (status === 'RETURNED') {
 		if (order.status !== RentalStatus.PICKED_UP) {
-		throw new ConflictError(
-			'Order can only be marked returned when it is in PICKED_UP status',
-		);
+			throw new ConflictError(
+				'Order can only be marked returned when it is in PICKED_UP status',
+			);
 		}
 	}
 
@@ -244,13 +265,21 @@ const updateOrderStatus = async (
 		},
 	});
 
-	return updatedOrder;
+	return stripRentalOrder(updatedOrder);
+};
+
+const getMyGearItems = async (providerId: string) => {
+	return prisma.gearItem.findMany({
+		where: { providerId },
+		orderBy: { createdAt: 'desc' },
+	});
 };
 
 export const providerService = {
 	addGearItem,
 	updateGearItem,
 	deleteGearItem,
+	getMyGearItems,
 	getIncomingOrders,
 	updateOrderStatus,
 };

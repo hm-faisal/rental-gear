@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config';
+import { ForbiddenError, UnauthorizedError } from '../errors';
 import { prisma } from '../lib/prisma';
 
 declare global {
@@ -26,7 +27,7 @@ export interface AuthRequest extends Request {
 export const auth = (roles?: string[]) => {
 	return async (
 		req: Request,
-		res: Response,
+		_res: Response,
 		next: NextFunction,
 	): Promise<void> => {
 		try {
@@ -37,11 +38,9 @@ export const auth = (roles?: string[]) => {
 			}
 
 			if (!token) {
-				res.status(401).json({
-					success: false,
-					message: 'You are not logged in! Please log in to get access.',
-				});
-				return;
+				throw new UnauthorizedError(
+					'You are not logged in! Please log in to get access.',
+				);
 			}
 
 			const decoded = jwt.verify(
@@ -55,29 +54,21 @@ export const auth = (roles?: string[]) => {
 			});
 
 			if (!user) {
-				res.status(401).json({
-					success: false,
-					message: 'The user belonging to this token no longer exists.',
-				});
-				return;
+				throw new UnauthorizedError(
+					'The user belonging to this token no longer exists.',
+				);
 			}
 
 			// Check if user is suspended
 			if (user.status === 'SUSPENDED') {
-				res.status(403).json({
-					success: false,
-					message: 'Your account is suspended.',
-				});
-				return;
+				throw new ForbiddenError('Your account is suspended.');
 			}
 
 			// Check role authorization if roles are specified
 			if (roles && roles.length > 0 && !roles.includes(user.role)) {
-				res.status(403).json({
-					success: false,
-					message: 'You do not have permission to perform this action.',
-				});
-				return;
+				throw new ForbiddenError(
+					'You do not have permission to perform this action.',
+				);
 			}
 
 			// Add user info to request
@@ -89,11 +80,16 @@ export const auth = (roles?: string[]) => {
 
 			next();
 		} catch (error: any) {
-			res.status(401).json({
-				success: false,
-				message: 'Invalid or expired token. Please log in again.',
-				error: error.message,
-			});
+			if (
+				error instanceof UnauthorizedError ||
+				error instanceof ForbiddenError
+			) {
+				next(error);
+				return;
+			}
+			next(
+				new UnauthorizedError('Invalid or expired token. Please log in again.'),
+			);
 		}
 	};
 };

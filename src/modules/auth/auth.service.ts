@@ -7,11 +7,7 @@ import {
 	UnauthorizedError,
 } from '../../errors';
 
-const mapUser = <T extends { role?: string; status?: string }>(user: T) => ({
-	...user,
-	role: user.role?.toLowerCase(),
-	status: user.status?.toLowerCase(),
-});
+const mapUser = <T>(user: T) => user;
 
 import { Role } from '../../generated/prisma/client';
 import { prisma } from '../../lib/prisma.js';

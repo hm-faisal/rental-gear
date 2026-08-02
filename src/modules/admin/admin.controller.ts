@@ -79,6 +79,17 @@ const getAllRentals = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const getAdminStats = catchAsync(async (_req: Request, res: Response) => {
+	const result = await adminService.getAdminStats();
+
+	sendResponse(res, {
+		statusCode: 200,
+		success: true,
+		message: 'Admin stats retrieved successfully',
+		data: result,
+	});
+});
+
 const createCategory = catchAsync(async (req: Request, res: Response) => {
 	const input = validateCategoryCreateInput(req.body);
 	const result = await adminService.createCategory(input);
@@ -116,6 +127,7 @@ export const adminController = {
 	updateUserStatus,
 	getAllGears,
 	getAllRentals,
+	getAdminStats,
 	createCategory,
 	updateCategory,
 	deleteCategory,

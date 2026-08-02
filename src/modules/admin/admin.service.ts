@@ -6,11 +6,7 @@ import type {
 } from '../../generated/prisma/index.js';
 import { prisma } from '../../lib/prisma.js';
 
-const mapUser = <T extends { role?: string; status?: string }>(user: T) => ({
-	...user,
-	role: user.role?.toLowerCase(),
-	status: user.status?.toLowerCase(),
-});
+const mapUser = <T>(user: T) => user;
 
 const formatDate = (date: Date): string =>
 	date.toISOString().split('T')[0] ?? '';
@@ -165,6 +161,52 @@ const getAllRentals = async (filters: {
 	};
 };
 
+const getAdminStats = async () => {
+	const [totalUsers, totalActiveGear, totalRentals, recentUsers, recentOrders] =
+		await Promise.all([
+			prisma.user.count(),
+			prisma.gearItem.count({ where: { isAvailable: true } }),
+			prisma.rentalOrder.count(),
+			prisma.user.findMany({
+				omit: { passwordHash: true },
+				orderBy: { createdAt: 'desc' },
+				take: 5,
+			}),
+			prisma.rentalOrder.findMany({
+				include: {
+					items: {
+						include: {
+							gearItem: {
+								select: {
+									id: true,
+									name: true,
+									providerId: true,
+								},
+							},
+						},
+					},
+					customer: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+				},
+				orderBy: { createdAt: 'desc' },
+				take: 5,
+			}),
+		]);
+
+	return {
+		totalUsers,
+		totalActiveGear,
+		totalRentals,
+		recentUsers: recentUsers.map(mapUser),
+		recentOrders: recentOrders.map(stripRentalOrder),
+	};
+};
+
 const createCategory = async (input: {
 	name: string;
 	description?: string;
@@ -250,6 +292,7 @@ export const adminService = {
 	updateUserStatus,
 	getAllGears,
 	getAllRentals,
+	getAdminStats,
 	createCategory,
 	updateCategory,
 	deleteCategory,

@@ -12,9 +12,9 @@
 		"prisma:generate": "prisma generate",
 		"prisma:migrate": "prisma migrate dev",
 		"prisma:studio": "prisma studio",
-		"biome": "@biomejs/biome check --write",
-		"biome:format": "@biomejs/biome format --write",
-		"biome:lint": "@biomejs/biome lint --write",
+		"biome": "bunx @biomejs/biome check --write",
+		"biome:format": "bunx @biomejs/biome format --write",
+		"biome:lint": "bunx @biomejs/biome lint --write",
 		"type:check": "tsc --noEmit"
 	},
 	"keywords": [],

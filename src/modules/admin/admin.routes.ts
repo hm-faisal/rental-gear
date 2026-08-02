@@ -7,6 +7,7 @@ const router = Router();
 // Protect all admin routes with auth(['ADMIN'])
 router.use(auth(['ADMIN']));
 
+router.get('/stats', adminController.getAdminStats);
 router.get('/users', adminController.getAllUsers);
 router.patch('/users/:id', adminController.updateUserStatus);
 router.get('/gear', adminController.getAllGears);
